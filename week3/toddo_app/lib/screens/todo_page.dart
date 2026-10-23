@@ -80,6 +80,11 @@ class _TodoPageState extends State<TodoPage> {
   void _deleteTask(int index) {
     _update(() => _tasks.removeAt(index));
   }
+  // Clear completed: removes every done task. I use _update (not plain
+  // setState) so the screen redraws AND the new list is saved to storage.
+  void _clearCompleted() {
+    _update(() => _tasks.removeWhere((t) => t.isDone));
+  }
 
   // Open the edit dialog and wait for the user to finish. The dialog gives
   // back the new title, or null if they pressed Cancel.
@@ -104,9 +109,19 @@ class _TodoPageState extends State<TodoPage> {
 
   @override
   Widget build(BuildContext context) {
+    final int remaining = _tasks.where((t) => !t.isDone).length;
     return Scaffold(
-      appBar: AppBar(title: const Text('My Tasks')),
-      // While loading, show a spinning circle. Once loaded, show the real page.
+      appBar: AppBar(
+        title: Text('My Tasks ($remaining left)'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.delete_sweep),
+            tooltip: 'Clear completed',
+            // null disables the button when nothing is done (the "extra")
+            onPressed: _tasks.any((t) => t.isDone) ? _clearCompleted : null,
+          ),
+        ],
+      ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           // Column stacks its children top to bottom: the input row, then the list.
